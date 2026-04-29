@@ -16,4 +16,7 @@ struct PhysicsCategory {
     static let enemy: UInt32  = 1 << 2
     static let coin: UInt32   = 1 << 3
     static let attack: UInt32 = 1 << 4
+    static let checkpoint: UInt32 = 1 << 5
+    static let levelEnd: UInt32 = 1 << 6
+    static let item: UInt32 = 1 << 7
 }

@@ -17,6 +17,12 @@ class CollisionManager {
     func handle(_ contact: SKPhysicsContact) {
         let a = contact.bodyA.categoryBitMask
         let b = contact.bodyB.categoryBitMask
+
+        if isPair(a, b, PhysicsCategory.player, PhysicsCategory.ground) {
+            if contact.normal.dy > 0 {
+                player?.canJump = true
+            }
+        }
         
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.enemy) {
             player?.takeDamage()
@@ -42,6 +48,36 @@ class CollisionManager {
             if b==PhysicsCategory.enemy {
                 contact.bodyB.node?.removeFromParent()
             }
+        }
+
+        if isPair(a, b, PhysicsCategory.player, PhysicsCategory.checkpoint) {
+            if a==PhysicsCategory.checkpoint {
+                guard let node = contact.bodyA.node else { return }
+                GameManager.shared.activateCheckpoint(point: node.position)
+            }
+            
+            if b==PhysicsCategory.checkpoint {
+                guard let node = contact.bodyB.node else { return }
+                GameManager.shared.activateCheckpoint(point: node.position)
+            }
+        }
+
+        if isPair(a, b, PhysicsCategory.player, PhysicsCategory.levelEnd) {
+            GameManager.shared.levelComplete()  
+        }
+
+        if isPair(a, b, PhysicsCategory.player, PhysicsCategory.item) {
+            if a==PhysicsCategory.item {
+                contact.bodyA.node?.removeFromParent()
+            }
+            
+            if b==PhysicsCategory.item {
+                contact.bodyB.node?.removeFromParent()
+            }
+
+            let item = getRandomItem()
+            print("Got item:", item)
+            item.apply(to: player)
         }
     }
     
