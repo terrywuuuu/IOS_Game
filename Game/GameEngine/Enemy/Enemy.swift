@@ -21,7 +21,7 @@ class Enemy: SKSpriteNode {
         physicsBody?.isDynamic = false
 
         physicsBody?.categoryBitMask = PhysicsCategory.enemy
-        physicsBody?.contactTestBitMask = PhysicsCategory.player
+        physicsBody?.contactTestBitMask = PhysicsCategory.player | PhysicsCategory.attack
         physicsBody?.collisionBitMask = 0
     }
 
@@ -42,7 +42,7 @@ class SpikeTrap: Enemy {
 
 class StaticMonster: Enemy {
     init(position: CGPoint) {
-        super.init(position: position, textureName: "enemy")
+        super.init(position: position, textureName: "enemy1")
     }
 
     required init?(coder: NSCoder) {

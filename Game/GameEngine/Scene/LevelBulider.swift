@@ -14,7 +14,8 @@ class LevelBuilder {
 
         createBackground(scene, level.background)
 
-        player.position = CGPoint(x: level.playerSpawn.x, y: level.playerSpawn.y)   
+        player.position = CGPoint(x: level.playerSpawn.x, y: level.playerSpawn.y)
+        GameManager.shared.checkpointManager.respawnPoint = player.position
 
         createGround(scene, level.grounds)
 
@@ -35,9 +36,11 @@ class LevelBuilder {
     }
 
     func createBackground(_ scene: SKScene, _ image: String) {
-        let background = SKSpriteNode(color: .cyan, size: CGSize(width: 2000, height: 1000))
-
-        background.position = CGPoint(x: 1500, y: 400)
+        let texture = SKTexture(imageNamed: image)
+        let background = SKSpriteNode(texture: texture)
+        
+        background.size = CGSize(width: 3000, height: scene.size.height)
+        background.position = CGPoint(x: 3000 / 2, y: scene.size.height / 2 + 100)
 
         background.zPosition = -1
 
@@ -56,6 +59,7 @@ class LevelBuilder {
             ground.physicsBody?.isDynamic = false
 
             ground.physicsBody?.categoryBitMask = PhysicsCategory.ground
+            ground.physicsBody?.contactTestBitMask = PhysicsCategory.player
 
             scene.addChild(ground)
         }
@@ -72,6 +76,7 @@ class LevelBuilder {
             platform.physicsBody?.isDynamic = false
 
             platform.physicsBody?.categoryBitMask = PhysicsCategory.ground
+            platform.physicsBody?.contactTestBitMask = PhysicsCategory.player
 
             scene.addChild(platform)
         }
@@ -80,6 +85,7 @@ class LevelBuilder {
     func createEnemy(_ enemyData: [EnemyData], scene: SKScene) {
         for e in enemyData {
             let enemy = StaticMonster(position: CGPoint(x: e.x, y: e.y))
+            enemy.size = CGSize(width: 30, height: 50)
             scene.addChild(enemy)
         }
     }
@@ -93,9 +99,10 @@ class LevelBuilder {
 
     func createCoin(_ scene: SKScene, _ coinData: [Coin]) {
         for c in coinData {
-            let coin = SKSpriteNode(color: .yellow, size: CGSize(width: 30, height: 30))
+            let coin = SKSpriteNode(imageNamed: "meat")
 
             coin.position = CGPoint(x: c.x, y: c.y)
+            coin.size = CGSize(width: 25, height: 30)
 
             coin.physicsBody = SKPhysicsBody(circleOfRadius: 15)
 
@@ -109,9 +116,10 @@ class LevelBuilder {
 
     func createCheckpoint(_ scene: SKScene, _ checkpointData: [Checkpoint]) {
         for c in checkpointData {
-            let checkpoint = SKSpriteNode(color: .blue, size: CGSize(width: 40, height: 80))
+            let checkpoint = SKSpriteNode(imageNamed: "checkpoint")
 
             checkpoint.position = CGPoint(x: c.x, y: c.y)
+            checkpoint.size = CGSize(width: 40, height: 60)
 
             checkpoint.physicsBody = SKPhysicsBody(rectangleOf: checkpoint.size)
 
@@ -125,9 +133,10 @@ class LevelBuilder {
 
     func createItems(_ scene: SKScene, _ itemData: [ItemData]) {
         for i in itemData {
-            let item = SKSpriteNode(color: .purple, size: CGSize(width: 30, height: 30))
+            let item = SKSpriteNode(imageNamed: "item1")
 
             item.position = CGPoint(x: i.x, y: i.y)
+            item.size = CGSize(width: 50, height: 50)
 
             item.physicsBody = SKPhysicsBody(circleOfRadius: 15)
 
@@ -140,7 +149,7 @@ class LevelBuilder {
     }
 
     func createGoal(_ scene: SKScene, _ goalData: Goal) {
-        let goal = SKSpriteNode(color: .green, size: CGSize(width: 50, height: 100))
+        let goal = SKSpriteNode(imageNamed: "door")
 
         goal.position = CGPoint(x: goalData.x, y: goalData.y)
 

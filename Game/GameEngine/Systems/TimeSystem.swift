@@ -1,17 +1,20 @@
 import Foundation
 
 class TimeManager {
-    var timeRemaining = 120
-
     var gameOverCallback: (() -> Void)?
 
     func tick() {
-        timeRemaining -= 1
-        print(timeRemaining)
+        // Ensure we update the shared DataManager on the main thread so
+        // SwiftUI will see the change immediately.
+        DispatchQueue.main.async {
+            DataManager.shared.timeRemaining -= 1
+            let tr = DataManager.shared.timeRemaining
+            print(tr)
 
-        if timeRemaining <= 0 {
-            timeRemaining = 0
-            gameOverCallback?()
+            if tr <= 0 {
+                DataManager.shared.timeRemaining = 0
+                self.gameOverCallback?()
+            }
         }
     }
 }

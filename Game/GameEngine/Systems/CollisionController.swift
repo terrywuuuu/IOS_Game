@@ -19,8 +19,18 @@ class CollisionManager {
         let b = contact.bodyB.categoryBitMask
 
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.ground) {
-            if contact.normal.dy > 0 {
+            var normal = contact.contactNormal
+
+            if a == PhysicsCategory.player {
+                normal = CGVector(dx: -normal.dx, dy: -normal.dy)
+            }
+
+            if normal.dy > 0.5 {
                 player?.canJump = true
+            } else {
+                if let p = player, contact.contactPoint.y < p.position.y - (p.size.height * 0.3) {
+                    player?.canJump = true
+                }
             }
         }
         
@@ -41,29 +51,26 @@ class CollisionManager {
         }
         
         if isPair(a, b, PhysicsCategory.attack, PhysicsCategory.enemy) {
-            if a==PhysicsCategory.enemy {
-                contact.bodyA.node?.removeFromParent()
-            }
-            
-            if b==PhysicsCategory.enemy {
-                contact.bodyB.node?.removeFromParent()
-            }
+            contact.bodyA.node?.removeFromParent()
+            contact.bodyB.node?.removeFromParent()
         }
 
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.checkpoint) {
             if a==PhysicsCategory.checkpoint {
                 guard let node = contact.bodyA.node else { return }
                 GameManager.shared.activateCheckpoint(point: node.position)
+                contact.bodyA.node?.removeFromParent()
             }
             
             if b==PhysicsCategory.checkpoint {
                 guard let node = contact.bodyB.node else { return }
                 GameManager.shared.activateCheckpoint(point: node.position)
+                contact.bodyB.node?.removeFromParent()
             }
         }
 
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.levelEnd) {
-            GameManager.shared.levelComplete()  
+            GameManager.shared.levelComplete()
         }
 
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.item) {
@@ -77,7 +84,8 @@ class CollisionManager {
 
             let item = getRandomItem()
             print("Got item:", item)
-            item.apply(to: player)
+            guard let p = player else { return }
+            item.apply(to: p)
         }
     }
     

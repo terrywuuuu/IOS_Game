@@ -14,6 +14,8 @@ class CameraController {
             let camera = cameraNode,
             let player = player
         else { return }
+        
+        if player.position.x < 450 { return } // prevent camera from moving before player reaches 450
 
         camera.position.x = player.position.x
     }

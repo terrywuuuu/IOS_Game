@@ -8,17 +8,20 @@
 import SpriteKit
 
 class Player: SKSpriteNode {
-    var moveSpeed: CGFloat = 220
-    var jumpForce: CGFloat = 600
+    var moveSpeed: CGFloat = 5
+    var jumpForce: CGFloat = 200
     var isInvincible = false
     var reverseControls = false
     var canJump = false
     var health = 3
     var hasAttack = false
     var canAttack = true
+    var turnLeft = false
+    var goLeft = false
+    var goRight = false
 
     init() {
-        let texture = SKTexture(imageNamed:"player")
+        let texture = SKTexture(imageNamed:"player1")
 
         super.init(texture: texture,
                    color: .clear,
@@ -51,17 +54,18 @@ class Player: SKSpriteNode {
     }
 
     func moveLeft() {
-        let speed = reverseControls ? moveSpeed : -moveSpeed
-        physicsBody?.velocity.dx = speed
+        goLeft = true
+        turnLeft = true
     }
 
     func moveRight() {
-        let speed = reverseControls ? -moveSpeed : moveSpeed
-        physicsBody?.velocity.dx = speed
+        goRight = true
+        turnLeft = false
     }
 
     func stop(){
-        physicsBody?.velocity.dx = 0
+        goLeft = false
+        goRight = false
     }
 
     func jump() {
@@ -76,12 +80,24 @@ class Player: SKSpriteNode {
         if !isInvincible {
             health -= 1
             print("Lives:", health)
-
-            if health <= 0 {
-                GameManager.shared.playerLose()  
+            DataManager.shared.playerHealth = health
+            hasAttack = false
+            DispatchQueue.main.async {
+                DataManager.shared.playerHasAttack = false
             }
 
-            GameManager.shared.respawnPlayer(player: self)
+            if health <= 0 {
+                GameManager.shared.playerLose()
+            }
+
+            DispatchQueue.main.async {
+                GameManager.shared.respawnPlayer(player: self)
+            }
+            
+            isInvincible = true
+            run(.wait(forDuration: 1.0)) {
+                self.isInvincible = false
+            }
         }
     }
     
@@ -92,23 +108,37 @@ class Player: SKSpriteNode {
 
         let hitbox = SKSpriteNode(
            color: .red,
-           size: CGSize(width: 40, height: 20)
+           size: CGSize(width: 20, height: 20)
         )
 
-        hitbox.position = CGPoint(x: position.x + 40, y: position.y)
+        if turnLeft {
+            hitbox.position = CGPoint(x: position.x - 40, y: position.y)
+        } else {
+            hitbox.position = CGPoint(x: position.x + 40, y: position.y)
+        }
 
         hitbox.physicsBody = SKPhysicsBody(rectangleOf: hitbox.size)
-
-        hitbox.physicsBody?.isDynamic = false
+        hitbox.physicsBody?.isDynamic = true
+        hitbox.physicsBody?.affectedByGravity = false
+        hitbox.physicsBody?.allowsRotation = false
+        hitbox.physicsBody?.usesPreciseCollisionDetection = true
 
         hitbox.physicsBody?.categoryBitMask = PhysicsCategory.attack
         hitbox.physicsBody?.contactTestBitMask = PhysicsCategory.enemy
-
+        hitbox.physicsBody?.collisionBitMask = 0
+        
+        let speed: CGFloat = 600
+        if turnLeft {
+            hitbox.physicsBody?.velocity = CGVector(dx: -speed, dy: 0)
+        } else {
+            hitbox.physicsBody?.velocity = CGVector(dx: speed, dy: 0)
+        }
+        
         scene.addChild(hitbox)
 
         hitbox.run(
           .sequence([
-            .wait(forDuration:0.15),
+            .wait(forDuration: 1.0),
             .removeFromParent()
           ])
         )
@@ -122,9 +152,70 @@ class Player: SKSpriteNode {
         if self.position.y < -100 {
             takeDamage()
         }
+        
+        if goLeft {
+            let speed = reverseControls ? moveSpeed : -moveSpeed
+            if self.position.x + speed > 50 { // prevent moving beyond left or right edge
+                self.position.x += speed
+            }
+        }
+        else if goRight {
+            let speed = reverseControls ? -moveSpeed : moveSpeed
+            if self.position.x + speed > 50 {
+                self.position.x += speed
+            }
+        }
     }
 
-    func setInvincible(_ value: Bool) {
-        isInvincible = value
+    func applyInvincibility(duration: TimeInterval) {
+        // cancel existing invincibility timer action if any
+        removeAction(forKey: "invincibleTimeout")
+        isInvincible = true
+        // update UI effect state with expiry to allow safe clearing when re-applied
+        DispatchQueue.main.async {
+            DataManager.shared.activeEffect = "無敵狀態"
+            DataManager.shared.activeEffectExpiresAt = Date().addingTimeInterval(duration)
+        }
+
+        let seq = SKAction.sequence([
+            .wait(forDuration: duration),
+            .run { [weak self] in
+                guard let self = self else { return }
+                self.isInvincible = false
+                DispatchQueue.main.async {
+                    if let expiry = DataManager.shared.activeEffectExpiresAt,
+                       expiry <= Date() {
+                        DataManager.shared.activeEffect = nil
+                        DataManager.shared.activeEffectExpiresAt = nil
+                    }
+                }
+            }
+        ])
+        run(seq, withKey: "invincibleTimeout")
+    }
+
+    func applyReverseControls(duration: TimeInterval) {
+        removeAction(forKey: "reverseControlsTimeout")
+        reverseControls = true
+        DispatchQueue.main.async {
+            DataManager.shared.activeEffect = "頭暈目眩"
+            DataManager.shared.activeEffectExpiresAt = Date().addingTimeInterval(duration)
+        }
+
+        let seq = SKAction.sequence([
+            .wait(forDuration: duration),
+            .run { [weak self] in
+                guard let self = self else { return }
+                self.reverseControls = false
+                DispatchQueue.main.async {
+                    if let expiry = DataManager.shared.activeEffectExpiresAt,
+                       expiry <= Date() {
+                        DataManager.shared.activeEffect = nil
+                        DataManager.shared.activeEffectExpiresAt = nil
+                    }
+                }
+            }
+        ])
+        run(seq, withKey: "reverseControlsTimeout")
     }
 }

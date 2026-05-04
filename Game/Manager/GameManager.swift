@@ -18,7 +18,7 @@ class GameManager {
 
     func addCoin() {
         score += 10
-
+        DataManager.shared.playerScore = score
         print("Score:",score)
     }
 
