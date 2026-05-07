@@ -26,10 +26,10 @@ class CollisionManager {
             }
 
             if normal.dy > 0.5 {
-                player?.canJump = true
+                player?.land()
             } else {
                 if let p = player, contact.contactPoint.y < p.position.y - (p.size.height * 0.3) {
-                    player?.canJump = true
+                    player?.land()
                 }
             }
         }

@@ -5,11 +5,11 @@ protocol Item {
 }
 
 let itemPool: [Item] = [
-//    InvincibleItem(),
-//    HealthItem(),
-//    ReverseControlItem(),
+    InvincibleItem(),
+    HealthItem(),
+    ReverseControlItem(),
     AttackItem(),
-//    TimeItem(addSeconds: 10)
+    TimeItem(addSeconds: 10)
 ]
 
 class InvincibleItem: Item {

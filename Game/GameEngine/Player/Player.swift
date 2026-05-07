@@ -9,7 +9,7 @@ import SpriteKit
 
 class Player: SKSpriteNode {
     var moveSpeed: CGFloat = 5
-    var jumpForce: CGFloat = 200
+    var jumpForce: CGFloat = 100
     var isInvincible = false
     var reverseControls = false
     var canJump = false
@@ -19,15 +19,26 @@ class Player: SKSpriteNode {
     var turnLeft = false
     var goLeft = false
     var goRight = false
+    var walkTextures: [SKTexture] = []
+    var attackTextures: [SKTexture] = []
+    var jumpTexture: SKTexture!
+    var landTexture: SKTexture!
+    var state: PlayerState = .idle
+    private var invincibilityWorkItem: DispatchWorkItem?
+    private var reverseControlsWorkItem: DispatchWorkItem?
+    private var invincibleUntil: Date?
+    private var reverseUntil: Date?
 
     init() {
         let texture = SKTexture(imageNamed:"player1")
+        texture.filteringMode = .nearest
 
         super.init(texture: texture,
                    color: .clear,
                    size: CGSize(width:50,height:50))
 
         setupPhysics()
+        setupAnimations()
     }
 
     required init?(coder:NSCoder) {
@@ -56,27 +67,40 @@ class Player: SKSpriteNode {
     func moveLeft() {
         goLeft = true
         turnLeft = true
+        xScale = -1
     }
 
     func moveRight() {
         goRight = true
         turnLeft = false
+        xScale = 1
     }
 
     func stop(){
         goLeft = false
         goRight = false
+        changeState(to: .idle)
     }
 
     func jump() {
         if canJump {
+            changeState(to: .jumping)
+
             physicsBody?.applyImpulse(CGVector(dx: 0, dy: jumpForce))
 
             canJump = false
         }
     }
+    
+    func land() {
+        if !canJump {
+            canJump = true
+            changeState(to: .falling)
+        }
+    }
 
     func takeDamage() {
+        print(isInvincible)
         if !isInvincible {
             health -= 1
             print("Lives:", health)
@@ -86,17 +110,14 @@ class Player: SKSpriteNode {
                 DataManager.shared.playerHasAttack = false
             }
 
+            applyInvincibility(duration: 1.0)
+            
             if health <= 0 {
                 GameManager.shared.playerLose()
-            }
-
-            DispatchQueue.main.async {
-                GameManager.shared.respawnPlayer(player: self)
-            }
-            
-            isInvincible = true
-            run(.wait(forDuration: 1.0)) {
-                self.isInvincible = false
+            } else {
+                DispatchQueue.main.async {
+                    GameManager.shared.respawnPlayer(player: self)
+                }
             }
         }
     }
@@ -106,6 +127,8 @@ class Player: SKSpriteNode {
         guard canAttack else { return }
         canAttack = false
 
+        changeState(to: .attacking)
+        
         let hitbox = SKSpriteNode(
            color: .red,
            size: CGSize(width: 20, height: 20)
@@ -143,8 +166,8 @@ class Player: SKSpriteNode {
           ])
         )
 
-        run(.wait(forDuration: 0.3)) {
-            self.canAttack = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.canAttack = true
         }
     }
 
@@ -154,12 +177,24 @@ class Player: SKSpriteNode {
         }
         
         if goLeft {
+            if canChangeToMoveState() {
+                if canJump {
+                    changeState(to: .walking)
+                }
+            }
+            
             let speed = reverseControls ? moveSpeed : -moveSpeed
             if self.position.x + speed > 50 { // prevent moving beyond left or right edge
                 self.position.x += speed
             }
         }
         else if goRight {
+            if canChangeToMoveState() {
+                if canJump {
+                    changeState(to: .walking)
+                }
+            }
+            
             let speed = reverseControls ? -moveSpeed : moveSpeed
             if self.position.x + speed > 50 {
                 self.position.x += speed
@@ -168,54 +203,68 @@ class Player: SKSpriteNode {
     }
 
     func applyInvincibility(duration: TimeInterval) {
-        // cancel existing invincibility timer action if any
-        removeAction(forKey: "invincibleTimeout")
+        // cancel any existing scheduled work
+        invincibilityWorkItem?.cancel()
+        invincibilityWorkItem = nil
+
+        let expiry = Date().addingTimeInterval(duration)
+        invincibleUntil = expiry
         isInvincible = true
-        // update UI effect state with expiry to allow safe clearing when re-applied
+
         DispatchQueue.main.async {
             DataManager.shared.activeEffect = "無敵狀態"
-            DataManager.shared.activeEffectExpiresAt = Date().addingTimeInterval(duration)
+            DataManager.shared.activeEffectExpiresAt = expiry
         }
 
-        let seq = SKAction.sequence([
-            .wait(forDuration: duration),
-            .run { [weak self] in
-                guard let self = self else { return }
-                self.isInvincible = false
-                DispatchQueue.main.async {
-                    if let expiry = DataManager.shared.activeEffectExpiresAt,
-                       expiry <= Date() {
-                        DataManager.shared.activeEffect = nil
-                        DataManager.shared.activeEffectExpiresAt = nil
-                    }
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            guard self.invincibleUntil == expiry else { return }
+            self.isInvincible = false
+            self.invincibleUntil = nil
+
+            DispatchQueue.main.async {
+                if let expiryCheck = DataManager.shared.activeEffectExpiresAt,
+                   expiryCheck <= Date(), DataManager.shared.activeEffect == "無敵狀態" {
+                    DataManager.shared.activeEffect = nil
+                    DataManager.shared.activeEffectExpiresAt = nil
                 }
             }
-        ])
-        run(seq, withKey: "invincibleTimeout")
+        }
+
+        invincibilityWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: work)
     }
 
     func applyReverseControls(duration: TimeInterval) {
-        removeAction(forKey: "reverseControlsTimeout")
+        // cancel existing scheduled work
+        reverseControlsWorkItem?.cancel()
+        reverseControlsWorkItem = nil
+
+        let expiry = Date().addingTimeInterval(duration)
+        reverseUntil = expiry
         reverseControls = true
+
         DispatchQueue.main.async {
             DataManager.shared.activeEffect = "頭暈目眩"
-            DataManager.shared.activeEffectExpiresAt = Date().addingTimeInterval(duration)
+            DataManager.shared.activeEffectExpiresAt = expiry
         }
 
-        let seq = SKAction.sequence([
-            .wait(forDuration: duration),
-            .run { [weak self] in
-                guard let self = self else { return }
-                self.reverseControls = false
-                DispatchQueue.main.async {
-                    if let expiry = DataManager.shared.activeEffectExpiresAt,
-                       expiry <= Date() {
-                        DataManager.shared.activeEffect = nil
-                        DataManager.shared.activeEffectExpiresAt = nil
-                    }
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            guard self.reverseUntil == expiry else { return }
+            self.reverseControls = false
+            self.reverseUntil = nil
+
+            DispatchQueue.main.async {
+                if let expiryCheck = DataManager.shared.activeEffectExpiresAt,
+                   expiryCheck <= Date(), DataManager.shared.activeEffect == "頭暈目眩" {
+                    DataManager.shared.activeEffect = nil
+                    DataManager.shared.activeEffectExpiresAt = nil
                 }
             }
-        ])
-        run(seq, withKey: "reverseControlsTimeout")
+        }
+
+        reverseControlsWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: work)
     }
 }
