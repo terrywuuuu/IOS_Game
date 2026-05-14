@@ -1,0 +1,98 @@
+{
+  "levelWidth": 3000,
+  "background": "Background2",
+
+  "playerSpawn": {
+    "x": 450,
+    "y": 300
+  },
+
+  "grounds":[
+    {
+      "x":1500,
+      "y":180,
+      "width":3000,
+      "height":10,
+      "texture":"ground"
+    }
+  ],
+
+  "platforms":[
+    {
+      "x":900,
+      "y":300,
+      "width":150,
+      "height":40
+    },
+
+    {
+      "x":1300,
+      "y":420,
+      "width":150,
+      "height":40
+    }
+  ],
+
+  "enemies":[
+    {
+      "type":"StaticMonster",
+      "x":700,
+      "y":210
+    }
+  ],
+
+  "spikes":[
+    {
+      "x":1150,
+      "y":210
+    }
+  ],
+
+  "coins":[
+    {"x": 600, "y": 270, "texture": "meat"},
+    {"x":950, "y":420, "texture": "meat"},
+    {"x": 1300, "y": 540, "texture": "meat"}
+  ],
+
+  "items":[
+    {
+      "type":"RandomItem",
+      "texture": "item1",
+      "x":1450,
+      "y":500
+    },
+    {
+      "type":"RandomItem",
+      "texture": "item1",
+      "x":200,
+      "y":300
+    },
+    {
+      "type":"RandomItem",
+      "texture": "item1",
+      "x":300,
+      "y":300
+    },
+    {
+      "type":"RandomItem",
+      "texture": "item1",
+      "x":400,
+      "y":300
+    }
+  ],
+
+  "checkpoints":[
+    {
+      "texture": "checkpoint",
+      "x":1800,
+      "y":220
+    }
+  ],
+
+  "goal":{
+    "texture": "door",
+    "x":2000,
+    "y":250
+  }
+}
+

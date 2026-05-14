@@ -8,8 +8,9 @@
 import SpriteKit
 
 class LevelBuilder {
-    func build(scene: SKScene, player: Player) {
-        guard let level = LevelLoader.load(name: "level1")
+    func build(scene: SKScene, player: Player, level: Int) {
+        let levelName = "level\(level)"
+        guard let level = LevelLoader.load(name: levelName)
         else { return }
 
         createBackground(scene, level.background)

@@ -9,7 +9,8 @@ let itemPool: [Item] = [
     HealthItem(),
     ReverseControlItem(),
     AttackItem(),
-    TimeItem(addSeconds: 10)
+    TimeItem(addSeconds: 10),
+    JumpItem()
 ]
 
 class InvincibleItem: Item {
@@ -91,6 +92,13 @@ class TimeItem: Item {
                 }
             }
         }
+    }
+}
+
+class JumpItem: Item {
+    func apply(to player: Player) {
+        // Reverse controls for 8 seconds
+        player.applyJump(duration: 8.0)
     }
 }
 

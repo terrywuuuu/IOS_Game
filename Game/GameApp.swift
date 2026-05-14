@@ -11,7 +11,7 @@ import SwiftUI
 struct GameApp: App {
     var body: some Scene {
         WindowGroup {
-            GameView()
+            GameView(selectedLevel: 2, selectedPlayer: 1)
         }
     }
 }

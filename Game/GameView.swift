@@ -11,16 +11,22 @@ import SpriteKit
 struct GameView: View {
     @StateObject private var data = DataManager.shared
 
-    var scene: SKScene {
-        let scene = GameScene()
+    private let skScene: GameScene
+    let selectedLevel: Int
+    let selectedPlayer: Int
+
+    init(selectedLevel: Int, selectedPlayer: Int) {
+        self.selectedLevel = selectedLevel
+        self.selectedPlayer = selectedPlayer
+        let scene = GameScene(selectedLevel: selectedLevel, selectedPlayer: selectedPlayer)
         scene.scaleMode = .resizeFill
-        return scene
+        self.skScene = scene
     }
     
     var body: some View {
         ZStack {
             // 遊戲場景
-            SpriteView(scene: scene)
+            SpriteView(scene: skScene)
                 .ignoresSafeArea()
 
             // 控制按鈕及遊戲資訊
@@ -54,6 +60,7 @@ struct GameView: View {
                         // 設定
                         Button {
                             print("open settings")
+                            skScene.pauseGame()
                         } label: {
                             Image(systemName: "gearshape.fill")
                                 .font(.title2)
@@ -159,5 +166,5 @@ struct GameView: View {
 }
 
 #Preview(traits: .landscapeRight) {
-    GameView()
+    GameView(selectedLevel: 2, selectedPlayer: 1)
 }

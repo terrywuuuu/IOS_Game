@@ -10,21 +10,21 @@ import Foundation
 import SpriteKit
 
 extension Player {
-    func setupAnimations() {
+    func setupAnimations(_ player: Int) {
         walkTextures = [
-            SKTexture(imageNamed: "player_walk1"),
-            SKTexture(imageNamed: "player_walk2"),
-            SKTexture(imageNamed: "player_walk3"),
-            SKTexture(imageNamed: "player_walk4")
+            SKTexture(imageNamed: "player\(player)_walk1"),
+            SKTexture(imageNamed: "player\(player)_walk2"),
+            SKTexture(imageNamed: "player\(player)_walk3"),
+            SKTexture(imageNamed: "player\(player)_walk4")
         ]
         
         attackTextures = [
-            SKTexture(imageNamed: "player_attack2")
+            SKTexture(imageNamed: "player\(player)_attack2")
         ]
         
-        jumpTexture = SKTexture(imageNamed: "player_jump1")
+        jumpTexture = SKTexture(imageNamed: "player\(player)_jump1")
         jumpTexture.filteringMode = .nearest
-        landTexture = SKTexture(imageNamed: "player_jump2")
+        landTexture = SKTexture(imageNamed: "player\(player)_jump2")
         landTexture.filteringMode = .nearest
 
         for texture in walkTextures {
@@ -50,7 +50,7 @@ extension Player {
     }
 
     func stopWalkAnimation() {
-        texture = SKTexture(imageNamed: "player1")
+        texture = SKTexture(imageNamed: playerName)
         texture?.filteringMode = .nearest
         size = CGSize(width: 50, height: 50)
     }

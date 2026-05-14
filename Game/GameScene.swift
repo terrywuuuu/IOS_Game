@@ -9,15 +9,25 @@ import SpriteKit
 import GameplayKit
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
-    let player = Player()
+    let selectedLevel: Int
+    let selectedPlayer: Int
     let levelBuilder = LevelBuilder()
     var collisionManager: CollisionManager!
     let gameCamera = SKCameraNode()
     var cameraController: CameraController!
     let timeManager = TimeManager()
+    var player: Player!
     
-//    private var label : SKLabelNode?
-//    private var spinnyNode : SKShapeNode?
+    init(selectedLevel: Int, selectedPlayer: Int) {
+        self.selectedLevel = selectedLevel
+        self.selectedPlayer = selectedPlayer
+        super.init(size: CGSize(width: 1024, height: 768))
+        self.player = Player(player: selectedPlayer)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func didMove(to view: SKView) {
         physicsWorld.gravity = CGVector(dx: 0,dy: -15)
@@ -29,7 +39,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         collisionManager = CollisionManager(player: player)
 
-        levelBuilder.build(scene: self, player: player)
+        levelBuilder.build(scene: self, player: player, level: selectedLevel)
 
         gameCamera.position = player.position
         addChild(gameCamera)
@@ -59,6 +69,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                                                selector: #selector(handleControlCommand(_:)),
                                                name: Notification.Name("GameControl"),
                                                object: nil)
+    }
+
+    func pauseGame() {
+        GameManager.shared.gameStateManager.pause()
+        self.isPaused = true
+        self.view?.isPaused = true
+    }
+
+    func resumeGame() {
+        GameManager.shared.gameStateManager.state = .playing
+        self.isPaused = false
+        self.view?.isPaused = false
     }
 
     deinit {
@@ -142,6 +164,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 //    }
 //
 //
+    
+    
     
     func didBegin(_ contact: SKPhysicsContact) {
         collisionManager.handle(contact)

@@ -26,11 +26,15 @@ class Player: SKSpriteNode {
     var state: PlayerState = .idle
     private var invincibilityWorkItem: DispatchWorkItem?
     private var reverseControlsWorkItem: DispatchWorkItem?
+    private var jumpWorkItem: DispatchWorkItem?
     private var invincibleUntil: Date?
     private var reverseUntil: Date?
+    private var jumpUntil: Date?
+    var playerName: String = ""
 
-    init() {
-        let texture = SKTexture(imageNamed:"player1")
+    init(player: Int) {
+        playerName = "player\(player)"
+        let texture = SKTexture(imageNamed: playerName)
         texture.filteringMode = .nearest
 
         super.init(texture: texture,
@@ -38,7 +42,7 @@ class Player: SKSpriteNode {
                    size: CGSize(width:50,height:50))
 
         setupPhysics()
-        setupAnimations()
+        setupAnimations(player)
     }
 
     required init?(coder:NSCoder) {
@@ -265,6 +269,39 @@ class Player: SKSpriteNode {
         }
 
         reverseControlsWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: work)
+    }
+    
+    func applyJump(duration: TimeInterval) {
+        // cancel existing scheduled work
+        jumpWorkItem?.cancel()
+        jumpWorkItem = nil
+
+        let expiry = Date().addingTimeInterval(duration)
+        jumpUntil = expiry
+        jumpForce = 150
+
+        DispatchQueue.main.async {
+            DataManager.shared.activeEffect = "穿上彈簧鞋"
+            DataManager.shared.activeEffectExpiresAt = expiry
+        }
+
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            guard self.jumpUntil == expiry else { return }
+            self.jumpForce = 100
+            self.jumpUntil = nil
+
+            DispatchQueue.main.async {
+                if let expiryCheck = DataManager.shared.activeEffectExpiresAt,
+                   expiryCheck <= Date(), DataManager.shared.activeEffect == "穿上彈簧鞋" {
+                    DataManager.shared.activeEffect = nil
+                    DataManager.shared.activeEffectExpiresAt = nil
+                }
+            }
+        }
+
+        jumpWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: work)
     }
 }
