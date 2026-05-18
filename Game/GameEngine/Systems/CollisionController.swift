@@ -36,6 +36,7 @@ class CollisionManager {
         
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.enemy) {
             player?.takeDamage()
+            AudioManager.shared.playHurt()
         }
         
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.coin) {
@@ -48,6 +49,7 @@ class CollisionManager {
             }
             
             GameManager.shared.addCoin()
+            AudioManager.shared.playCoin()
         }
         
         if isPair(a, b, PhysicsCategory.attack, PhysicsCategory.enemy) {
@@ -67,10 +69,13 @@ class CollisionManager {
                 GameManager.shared.activateCheckpoint(point: node.position)
                 contact.bodyB.node?.removeFromParent()
             }
+            
+            AudioManager.shared.playItem()
         }
 
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.levelEnd) {
             GameManager.shared.levelComplete()
+            AudioManager.shared.platWin()
         }
 
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.item) {
@@ -86,6 +91,7 @@ class CollisionManager {
             print("Got item:", item)
             guard let p = player else { return }
             item.apply(to: p)
+            AudioManager.shared.playItem()
         }
     }
     

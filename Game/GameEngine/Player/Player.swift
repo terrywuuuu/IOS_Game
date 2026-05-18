@@ -84,11 +84,13 @@ class Player: SKSpriteNode {
         goLeft = false
         goRight = false
         changeState(to: .idle)
+        AudioManager.shared.playStop()
     }
 
     func jump() {
         if canJump {
             changeState(to: .jumping)
+            AudioManager.shared.playJump()
 
             physicsBody?.applyImpulse(CGVector(dx: 0, dy: jumpForce))
 
@@ -117,8 +119,10 @@ class Player: SKSpriteNode {
             applyInvincibility(duration: 1.0)
             
             if health <= 0 {
+                AudioManager.shared.playLose()
                 GameManager.shared.playerLose()
             } else {
+                AudioManager.shared.playHurt()
                 DispatchQueue.main.async {
                     GameManager.shared.respawnPlayer(player: self)
                 }
@@ -132,6 +136,7 @@ class Player: SKSpriteNode {
         canAttack = false
 
         changeState(to: .attacking)
+        AudioManager.shared.playAttack()
         
         let hitbox = SKSpriteNode(
            color: .red,
@@ -191,6 +196,8 @@ class Player: SKSpriteNode {
             if self.position.x + speed > 50 { // prevent moving beyond left or right edge
                 self.position.x += speed
             }
+            
+            AudioManager.shared.playWalk()
         }
         else if goRight {
             if canChangeToMoveState() {
@@ -203,6 +210,8 @@ class Player: SKSpriteNode {
             if self.position.x + speed > 50 {
                 self.position.x += speed
             }
+            
+            AudioManager.shared.playWalk()
         }
     }
 
