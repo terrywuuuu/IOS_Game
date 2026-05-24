@@ -49,3 +49,24 @@ class StaticMonster: Enemy {
         fatalError()
     }
 }
+
+class PatrolMonster: Enemy {
+    init(position: CGPoint) {
+        super.init(position: position, textureName: "enemy1")
+        
+        let goRight = SKAction.moveBy(x: 200, y: 0,
+                                      duration: 2.0)
+        let goLeft = goRight.reversed()
+
+        // 翻轉面向
+        let faceRight = SKAction.run { self.xScale = -abs(self.xScale) }
+        let faceLeft  = SKAction.run { self.xScale = abs(self.xScale) }
+
+        let seq = SKAction.sequence([faceRight, goRight, faceLeft, goLeft])
+        run(SKAction.repeatForever(seq))
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}

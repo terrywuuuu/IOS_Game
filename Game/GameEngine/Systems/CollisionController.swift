@@ -17,20 +17,37 @@ class CollisionManager {
     func handle(_ contact: SKPhysicsContact) {
         let a = contact.bodyA.categoryBitMask
         let b = contact.bodyB.categoryBitMask
-
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.ground) {
             var normal = contact.contactNormal
 
-            if a == PhysicsCategory.player {
+            // contactNormal points from bodyA -> bodyB. If bodyA is player, invert to get normal relative to player
+            if contact.bodyA.categoryBitMask == PhysicsCategory.player {
                 normal = CGVector(dx: -normal.dx, dy: -normal.dy)
             }
 
             if normal.dy > 0.5 {
                 player?.land()
-            } else {
-                if let p = player, contact.contactPoint.y < p.position.y - (p.size.height * 0.3) {
-                    player?.land()
-                }
+            } else if let p = player, contact.contactPoint.y < p.position.y - (p.size.height * 0.3) {
+                player?.land()
+            }
+        }
+
+        if isPair(a, b, PhysicsCategory.player, PhysicsCategory.fallingPlat) {
+            var normal = contact.contactNormal
+
+            if contact.bodyA.categoryBitMask == PhysicsCategory.player {
+                normal = CGVector(dx: -normal.dx, dy: -normal.dy)
+            }
+
+            // determine which body is the platform
+            let platNode: SKNode? = (contact.bodyA.categoryBitMask == PhysicsCategory.fallingPlat) ? contact.bodyA.node : contact.bodyB.node
+
+            if normal.dy > 0.5 {
+                player?.land()
+                (platNode as? FallingPlatform)?.triggerFall()
+            } else if let p = player, contact.contactPoint.y < p.position.y - (p.size.height * 0.3) {
+                player?.land()
+                (platNode as? FallingPlatform)?.triggerFall()
             }
         }
         

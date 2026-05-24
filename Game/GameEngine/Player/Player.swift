@@ -10,7 +10,7 @@ import SpriteKit
 class Player: SKSpriteNode {
     var moveSpeed: CGFloat = 5
     var jumpForce: CGFloat = 100
-    var isInvincible = false
+    var isInvincible = true
     var reverseControls = false
     var canJump = false
     var health = 3
@@ -58,7 +58,7 @@ class Player: SKSpriteNode {
             PhysicsCategory.player
 
         physicsBody?.collisionBitMask =
-            PhysicsCategory.ground
+            PhysicsCategory.ground | PhysicsCategory.fallingPlat
 
         physicsBody?.contactTestBitMask =
             PhysicsCategory.enemy |

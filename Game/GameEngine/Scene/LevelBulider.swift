@@ -13,7 +13,7 @@ class LevelBuilder {
         guard let level = LevelLoader.load(name: levelName)
         else { return }
 
-        createBackground(scene, level.background)
+        createBackground(scene, level.background, level.levelWidth)
 
         player.position = CGPoint(x: level.playerSpawn.x, y: level.playerSpawn.y)
         GameManager.shared.checkpointManager.respawnPoint = player.position
@@ -21,6 +21,10 @@ class LevelBuilder {
         createGround(scene, level.grounds)
 
         createPlatform(scene, level.platforms)
+        
+        createMovingPlatform(scene, level.movingPlatforms)
+        
+        createFallingPlatform(scene, level.fallingPlatforms)
 
         createEnemy(level.enemies, scene: scene)
         createSpikeTraps(level.spikes, scene: scene)
@@ -36,16 +40,27 @@ class LevelBuilder {
         scene.addChild(player)
     }
 
-    func createBackground(_ scene: SKScene, _ image: String) {
+    func createBackground(_ scene: SKScene, _ image: String, _ levelWidth: Int) {
         let texture = SKTexture(imageNamed: image)
-        let background = SKSpriteNode(texture: texture)
+        let texWidth = texture.size().width
+        let count = Int(ceil(CGFloat(levelWidth) / texWidth))
         
-        background.size = CGSize(width: 3000, height: scene.size.height)
-        background.position = CGPoint(x: 3000 / 2, y: scene.size.height / 2 + 100)
-
-        background.zPosition = -1
-
-        scene.addChild(background)
+//        background.size = CGSize(width: 3000, height: scene.size.height)
+//        background.position = CGPoint(x: 3000 / 2, y: scene.size.height / 2 + 100)
+//
+//        background.zPosition = -1
+//
+//        scene.addChild(background)
+        for i in 0..<count {
+                let bg = SKSpriteNode(texture: texture)
+                bg.size = CGSize(width: texWidth, height: scene.size.height)
+                bg.position = CGPoint(
+                    x: texWidth * CGFloat(i) + texWidth / 2,
+                    y: scene.size.height / 2 + 100
+                )
+                bg.zPosition = -1
+                scene.addChild(bg)
+            }
     }
     
     func createGround(_ scene: SKScene, _ groundData: [Ground]) {
@@ -83,11 +98,59 @@ class LevelBuilder {
         }
     }
     
+    func createMovingPlatform(_ scene: SKScene, _ platformData: [movingPlatform]) {
+        for p in platformData {
+            let platform = SKSpriteNode(color: .gray, size: CGSize(width: p.width, height: p.height))
+
+            platform.position = CGPoint(x: p.x, y: p.y)
+
+            platform.physicsBody = SKPhysicsBody(rectangleOf: platform.size)
+
+            platform.physicsBody?.isDynamic = false
+
+            platform.physicsBody?.categoryBitMask = PhysicsCategory.ground
+            platform.physicsBody?.contactTestBitMask = PhysicsCategory.player
+            
+            // 左右來回移動
+            let moveRight = SKAction.moveBy(x: 600, y: 0,
+                                            duration: 5.0)
+            let moveLeft = moveRight.reversed()
+            let seq = SKAction.sequence([moveRight, moveLeft])
+            platform.run(SKAction.repeatForever(seq))
+
+            scene.addChild(platform)
+        }
+    }
+    
+    func createFallingPlatform(_ scene: SKScene, _ platformData: [fallingPlatform]) {
+        for p in platformData {
+            let platform = FallingPlatform(originalPosition: CGPoint(x: p.x, y: p.y), width: p.width, height: p.height)
+
+            platform.position = CGPoint(x: p.x, y: p.y)
+
+            platform.physicsBody = SKPhysicsBody(rectangleOf: platform.size)
+
+            platform.physicsBody?.isDynamic = false
+
+            platform.physicsBody?.categoryBitMask = PhysicsCategory.fallingPlat
+            platform.physicsBody?.contactTestBitMask = PhysicsCategory.player
+
+            scene.addChild(platform)
+        }
+    }
+    
     func createEnemy(_ enemyData: [EnemyData], scene: SKScene) {
         for e in enemyData {
-            let enemy = StaticMonster(position: CGPoint(x: e.x, y: e.y))
-            enemy.size = CGSize(width: 30, height: 50)
-            scene.addChild(enemy)
+            if e.type == "PatrolMonster" {
+                let enemy = PatrolMonster(position: CGPoint(x: e.x, y: e.y))
+                enemy.size = CGSize(width: 30, height: 50)
+                scene.addChild(enemy)
+            }
+            else {
+                let enemy = StaticMonster(position: CGPoint(x: e.x, y: e.y))
+                enemy.size = CGSize(width: 30, height: 50)
+                scene.addChild(enemy)
+            }
         }
     }
     

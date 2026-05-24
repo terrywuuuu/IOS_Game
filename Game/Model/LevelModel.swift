@@ -9,6 +9,10 @@ struct LevelData: Decodable {
     let grounds:[Ground]
 
     let platforms:[Platform]
+    
+    let movingPlatforms:[movingPlatform]
+    
+    let fallingPlatforms:[fallingPlatform]
 
     let enemies:[EnemyData]
 
@@ -37,6 +41,20 @@ struct Ground:Decodable{
 }
 
 struct Platform:Decodable{
+    let x:CGFloat
+    let y:CGFloat
+    let width:CGFloat
+    let height:CGFloat
+}
+
+struct movingPlatform:Decodable{
+    let x:CGFloat
+    let y:CGFloat
+    let width:CGFloat
+    let height:CGFloat
+}
+
+struct fallingPlatform:Decodable{
     let x:CGFloat
     let y:CGFloat
     let width:CGFloat

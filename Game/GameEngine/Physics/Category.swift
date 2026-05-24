@@ -8,7 +8,6 @@
 import SpriteKit
 
 struct PhysicsCategory {
-
     static let none: UInt32   = 0
 
     static let player: UInt32 = 1 << 0
@@ -19,4 +18,5 @@ struct PhysicsCategory {
     static let checkpoint: UInt32 = 1 << 5
     static let levelEnd: UInt32 = 1 << 6
     static let item: UInt32 = 1 << 7
+    static let fallingPlat: UInt32 = 1 << 8
 }
