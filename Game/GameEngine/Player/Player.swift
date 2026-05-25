@@ -65,7 +65,8 @@ class Player: SKSpriteNode {
             PhysicsCategory.coin |
             PhysicsCategory.checkpoint |
             PhysicsCategory.item |
-            PhysicsCategory.levelEnd
+            PhysicsCategory.levelEnd |
+            PhysicsCategory.darkItem
     }
 
     func moveLeft() {
@@ -138,10 +139,8 @@ class Player: SKSpriteNode {
         changeState(to: .attacking)
         AudioManager.shared.playAttack()
         
-        let hitbox = SKSpriteNode(
-           color: .red,
-           size: CGSize(width: 20, height: 20)
-        )
+        let hitbox = SKSpriteNode(imageNamed: "weapon")
+        hitbox.size = CGSize(width: 30, height: 30)
 
         if turnLeft {
             hitbox.position = CGPoint(x: position.x - 40, y: position.y)
@@ -168,11 +167,17 @@ class Player: SKSpriteNode {
         
         scene.addChild(hitbox)
 
+        // 旋轉動畫
+        let rotate = SKAction.repeatForever(
+            SKAction.rotate(byAngle: .pi * 2, duration: 0.4)  // 0.4秒轉一圈
+        )
+        hitbox.run(rotate)
+
         hitbox.run(
-          .sequence([
-            .wait(forDuration: 1.0),
-            .removeFromParent()
-          ])
+            .sequence([
+                .wait(forDuration: 1.0),
+                .removeFromParent()
+            ])
         )
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in

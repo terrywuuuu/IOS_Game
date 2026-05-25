@@ -127,6 +127,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         case .playing:
             player.update()
             cameraController.update()
+            
+            if selectedLevel == 2 {
+                updateDarknessOverlay(self, player)
+            }
             break
         case .paused:
             return

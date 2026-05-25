@@ -39,7 +39,7 @@ class FallingPlatform: SKSpriteNode {
 
         run(SKAction.sequence([
             shake,
-            SKAction.wait(forDuration: 0.5),
+            SKAction.wait(forDuration: 0.3),
             SKAction.run { [weak self] in
                 self?.physicsBody?.categoryBitMask = 0
             },

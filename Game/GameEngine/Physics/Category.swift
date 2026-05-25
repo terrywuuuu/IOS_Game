@@ -19,4 +19,5 @@ struct PhysicsCategory {
     static let levelEnd: UInt32 = 1 << 6
     static let item: UInt32 = 1 << 7
     static let fallingPlat: UInt32 = 1 << 8
+    static let darkItem: UInt32 = 1 << 9
 }

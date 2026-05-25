@@ -34,6 +34,14 @@ class AudioManager {
         gameScene?.run(sound)
     }
     
+    func playAttacked() {
+        let sound = SKAction.playSoundFileNamed(
+            "attacked.mp3",
+            waitForCompletion: false
+        )
+        gameScene?.run(sound)
+    }
+    
     func playCoin() {
         let sound = SKAction.playSoundFileNamed(
             "coin.mp3",

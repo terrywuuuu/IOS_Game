@@ -70,8 +70,10 @@ class CollisionManager {
         }
         
         if isPair(a, b, PhysicsCategory.attack, PhysicsCategory.enemy) {
+            spawnHitEffect(at: contact.contactPoint, in: contact.bodyB.node?.scene)
             contact.bodyA.node?.removeFromParent()
             contact.bodyB.node?.removeFromParent()
+            AudioManager.shared.playAttacked()
         }
 
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.checkpoint) {
@@ -106,6 +108,21 @@ class CollisionManager {
 
             let item = getRandomItem()
             print("Got item:", item)
+            guard let p = player else { return }
+            item.apply(to: p)
+            AudioManager.shared.playItem()
+        }
+        
+        if isPair(a, b, PhysicsCategory.player, PhysicsCategory.darkItem) {
+            if a==PhysicsCategory.darkItem {
+                contact.bodyA.node?.removeFromParent()
+            }
+            
+            if b==PhysicsCategory.darkItem {
+                contact.bodyB.node?.removeFromParent()
+            }
+            
+            let item = DarknessItem()
             guard let p = player else { return }
             item.apply(to: p)
             AudioManager.shared.playItem()

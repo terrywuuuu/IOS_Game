@@ -1,4 +1,5 @@
 import Foundation
+import SpriteKit
 
 protocol Item {
  func apply(to player: Player)
@@ -99,6 +100,13 @@ class JumpItem: Item {
     func apply(to player: Player) {
         // Reverse controls for 8 seconds
         player.applyJump(duration: 8.0)
+    }
+}
+
+class DarknessItem: Item {
+    func apply(to player: Player) {
+        guard let scene = player.scene else { return }
+        applyDarknessEffect(to: scene, player: player)
     }
 }
 

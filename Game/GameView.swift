@@ -166,5 +166,5 @@ struct GameView: View {
 }
 
 #Preview(traits: .landscapeRight) {
-    GameView(selectedLevel: 1, selectedPlayer: 1)
+    GameView(selectedLevel: 2, selectedPlayer: 2)
 }

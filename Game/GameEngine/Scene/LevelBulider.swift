@@ -206,7 +206,12 @@ class LevelBuilder {
 
             item.physicsBody?.isDynamic = false
 
-            item.physicsBody?.categoryBitMask = PhysicsCategory.item
+            if i.type == "Darkness" {
+                item.physicsBody?.categoryBitMask = PhysicsCategory.darkItem
+            }
+            else {
+                item.physicsBody?.categoryBitMask = PhysicsCategory.item
+            }
 
             scene.addChild(item)
         }
