@@ -6,16 +6,37 @@ class AudioManager {
     
     private weak var gameScene: SKScene?
     private var walkPlayer: AVAudioPlayer?
+    private var gbgmNode: SKAudioNode?
+    private var bgmNode: SKAudioNode?
     
     func setScene(_ scene: SKScene) {
         self.gameScene = scene
     }
 
-    func playBGM() {
-        let music = SKAudioNode(
-            fileNamed: "bgm.mp3"
-        )
+    func playGameBGM() {
+        let music = SKAudioNode(fileNamed: "gameBGM.mp3")
+        music.name = "gbgm"
+        gbgmNode = music
         gameScene?.addChild(music)
+    }
+    
+    func stopGameBGM() {
+        gbgmNode?.run(SKAction.stop())
+        gbgmNode?.removeFromParent()
+        gbgmNode = nil
+    }
+    
+    func playBGM() {
+        let music = SKAudioNode(fileNamed: "bgm.mp3")
+        music.name = "bgm"
+        bgmNode = music
+        gameScene?.addChild(music)
+    }
+    
+    func stopBGM() {
+        bgmNode?.run(SKAction.stop())
+        bgmNode?.removeFromParent()
+        bgmNode = nil
     }
 
     func playJump() {

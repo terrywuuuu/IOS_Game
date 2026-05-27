@@ -35,7 +35,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         physicsWorld.contactDelegate = self
 
         AudioManager.shared.setScene(self)
-        AudioManager.shared.playBGM()
+        AudioManager.shared.playGameBGM()
 
         collisionManager = CollisionManager(player: player)
 
@@ -58,10 +58,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         timeManager.gameOverCallback = { [weak self] in
             guard self != nil else { return }
-
             print("Times out")
 
-            GameManager.shared.gameStateManager.state = .lose
+            GameManager.shared.playerLose()
+            AudioManager.shared.playLose()
         }
 
         // Register for UI control commands (used by SwiftUI buttons for testing)
@@ -137,10 +137,30 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         case .win:
             // 顯示勝利畫面
             print("Victory")
+            AudioManager.shared.stopGameBGM()
+            
+            // 等音效播完再暫停
+            run(.sequence([
+                .wait(forDuration: 2.0),
+                .run { [weak self] in
+                    self?.pauseGame()
+//                    self?.onWin?()  // 通知 SwiftUI 切換畫面
+                }
+            ]))
             return
         case .lose:
             // 顯示失敗畫面
             print("Game Over")
+            AudioManager.shared.stopGameBGM()
+            
+            // 等音效播完再暫停
+            run(.sequence([
+                .wait(forDuration: 1.0),
+                .run { [weak self] in
+                    self?.pauseGame()
+//                    self?.onLoss?()  // 通知 SwiftUI 切換畫面
+                }
+            ]))
             return
         }
     }

@@ -10,7 +10,7 @@ import SpriteKit
 class Player: SKSpriteNode {
     var moveSpeed: CGFloat = 5
     var jumpForce: CGFloat = 100
-    var isInvincible = true
+    var isInvincible = false
     var reverseControls = false
     var canJump = false
     var health = 3
@@ -120,8 +120,8 @@ class Player: SKSpriteNode {
             applyInvincibility(duration: 1.0)
             
             if health <= 0 {
-                AudioManager.shared.playLose()
                 GameManager.shared.playerLose()
+                AudioManager.shared.playLose()
             } else {
                 AudioManager.shared.playHurt()
                 DispatchQueue.main.async {

@@ -10,6 +10,7 @@ import SpriteKit
 
 struct GameView: View {
     @StateObject private var data = DataManager.shared
+    @State private var isPaused = false
 
     private let skScene: GameScene
     let selectedLevel: Int
@@ -61,6 +62,7 @@ struct GameView: View {
                         Button {
                             print("open settings")
                             skScene.pauseGame()
+                            isPaused = true
                         } label: {
                             Image(systemName: "gearshape.fill")
                                 .font(.title2)
@@ -160,6 +162,21 @@ struct GameView: View {
                     }
                 }
                 .padding()
+            }
+            
+            // 暫停選單
+            if isPaused {
+                PauseMenuView(
+                    onResume: {
+                        isPaused = false
+                        skScene.resumeGame()
+                    },
+                    onQuit: {
+                        isPaused = false
+                        AudioManager.shared.stopGameBGM()
+                        // 回到大廳
+                    }
+                )
             }
         }
     }
