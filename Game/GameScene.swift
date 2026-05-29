@@ -139,12 +139,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             print("Victory")
             AudioManager.shared.stopGameBGM()
             
-            // 等音效播完再暫停
+            // 等音效播完 2 秒後，正式暫停遊戲並發通知給 SwiftUI 跳出「恭喜！」結算頁
             run(.sequence([
                 .wait(forDuration: 2.0),
                 .run { [weak self] in
                     self?.pauseGame()
-//                    self?.onWin?()  // 通知 SwiftUI 切換畫面
+                    NotificationCenter.default.post(name: Notification.Name("GameSuccess"), object: nil)
                 }
             ]))
             return
@@ -155,12 +155,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             // 等音效播完再暫停
             run(.sequence([
-                .wait(forDuration: 1.0),
-                .run { [weak self] in
-                    self?.pauseGame()
-//                    self?.onLoss?()  // 通知 SwiftUI 切換畫面
-                }
-            ]))
+                                .wait(forDuration: 1.0),
+                                .run { [weak self] in
+                                    self?.pauseGame()
+                                    NotificationCenter.default.post(name: Notification.Name("GameFailure"), object: nil)
+                                }
+                            ]))
             return
         }
     }

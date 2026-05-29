@@ -37,6 +37,7 @@ struct PauseMenuView: View {
                 }
 
                 Button {
+                    DataManager.shared.resetData()
                     onQuit()
                 } label: {
                     Text("退出")

@@ -9,25 +9,32 @@ import SwiftUI
 import SpriteKit
 
 struct GameView: View {
+    @Environment(\.dismiss) var dismiss // 用於點選「退出」時，關閉當前頁面返回大廳選單
     @StateObject private var data = DataManager.shared
     @State private var isPaused = false
 
-    private let skScene: GameScene
+    // --- 🛠️ 新增：控制結算頁面彈出的狀態 ---
+    @State private var showResult = false
+    @State private var isSuccess = false
+
+    // --- 🛠️ 新增：控制 SpriteKit 場景刷新的識別碼（再來一次功能關鍵） ---
+    @State private var sceneID = UUID()
+    
     let selectedLevel: Int
     let selectedPlayer: Int
 
-    init(selectedLevel: Int, selectedPlayer: Int) {
-        self.selectedLevel = selectedLevel
-        self.selectedPlayer = selectedPlayer
+    // --- 🛠️ 修改：將 skScene 改為計算屬性，這樣場景重置時才能實例化新的 GameScene ---
+    private var skScene: GameScene {
         let scene = GameScene(selectedLevel: selectedLevel, selectedPlayer: selectedPlayer)
         scene.scaleMode = .resizeFill
-        self.skScene = scene
+        return scene
     }
     
     var body: some View {
         ZStack {
-            // 遊戲場景
+            // 遊戲場景（加上 .id(sceneID) 綁定，當識別碼改變時，SpriteView 就會徹底重開機）
             SpriteView(scene: skScene)
+                .id(sceneID)
                 .ignoresSafeArea()
 
             // 控制按鈕及遊戲資訊
@@ -61,7 +68,8 @@ struct GameView: View {
                         // 設定
                         Button {
                             print("open settings")
-                            skScene.pauseGame()
+                            // 💡 通知 GameScene 暫停遊戲
+                            NotificationCenter.default.post(name: Notification.Name("GameControl"), object: nil, userInfo: ["command":"pause"])
                             isPaused = true
                         } label: {
                             Image(systemName: "gearshape.fill")
@@ -70,6 +78,7 @@ struct GameView: View {
                     }
                 }
                 .padding()
+                
                 // 中央上方：顯示當前道具效果
                 if let effect = data.activeEffect {
                     Text("\(effect)")
@@ -127,6 +136,7 @@ struct GameView: View {
                                 NotificationCenter.default.post(name: Notification.Name("GameControl"), object: nil, userInfo: ["command":"right","type":"up"])
                             }
                         }, perform: {})
+                        
                         Button(action: {
                             NotificationCenter.default.post(
                                 name: Notification.Name("GameControl"),
@@ -151,7 +161,6 @@ struct GameView: View {
                                 userInfo: ["command":"attack","type":"tap"]
                             )
                         }) {
-                            // Change image and size depending on whether player has attack
                             let imgName = data.playerHasAttack ? "attack" : "attack_lock"
                             let size: CGFloat = data.playerHasAttack ? 40 : 50
                             Image(imgName)
@@ -169,15 +178,54 @@ struct GameView: View {
                 PauseMenuView(
                     onResume: {
                         isPaused = false
-                        skScene.resumeGame()
+                        // 💡 通知 GameScene 恢復遊戲
+                        NotificationCenter.default.post(name: Notification.Name("GameControl"), object: nil, userInfo: ["command":"resume"])
                     },
                     onQuit: {
                         isPaused = false
                         AudioManager.shared.stopGameBGM()
-                        // 回到大廳
+                        dismiss() // 回到大廳
                     }
                 )
             }
+            
+            // --- 🛠️ 新增：全螢幕結算頁面渲染層 ---
+            if showResult {
+                GameResultView(
+                    isSuccess: isSuccess,
+                    onQuit: {
+                        showResult = false
+                        AudioManager.shared.stopGameBGM()
+                        dismiss() // 退出回大廳選單
+                    },
+                    onRestart: {
+                        showResult = false
+                        data.resetData()     // 1. 洗乾淨 DataManager 數據
+                        sceneID = UUID()     // 2. 更改 UUID，強制讓全新 GameScene 重頭載入
+                    }
+                )
+                .transition(.opacity)
+                .zIndex(10) // 確保蓋在最上層
+            }
+        }
+        // --- 🛠️ 新增：通知中心接球監聽器 ---
+        
+        // 1. 監聽從 GameScene 發過來的勝利通知
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("GameSuccess"))) { _ in
+            triggerGameOver(success: true)
+        }
+        
+        // 2. 監聽從 GameScene 發過來的失敗通知
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("GameFailure"))) { _ in
+            triggerGameOver(success: false)
+        }
+    }
+    
+    // 🛠️ 新增：觸發顯現結算層的內部輔助方法
+    private func triggerGameOver(success: Bool) {
+        isSuccess = success
+        withAnimation(.easeInOut) {
+            showResult = true
         }
     }
 }

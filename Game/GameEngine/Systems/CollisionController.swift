@@ -67,6 +67,7 @@ class CollisionManager {
             
             GameManager.shared.addCoin()
             AudioManager.shared.playCoin()
+            DataManager.shared.meatCount += 1
         }
         
         if isPair(a, b, PhysicsCategory.attack, PhysicsCategory.enemy) {
@@ -74,6 +75,7 @@ class CollisionManager {
             contact.bodyA.node?.removeFromParent()
             contact.bodyB.node?.removeFromParent()
             AudioManager.shared.playAttacked()
+            DataManager.shared.enemyKilled += 1
         }
 
         if isPair(a, b, PhysicsCategory.player, PhysicsCategory.checkpoint) {
