@@ -24,10 +24,14 @@ struct GameView: View {
     let selectedPlayer: Int
 
     // --- 🛠️ 修改：將 skScene 改為計算屬性，這樣場景重置時才能實例化新的 GameScene ---
-    private var skScene: GameScene {
+    @State private var skScene: GameScene
+    
+    init(selectedLevel: Int, selectedPlayer: Int) {
+        self.selectedLevel = selectedLevel
+        self.selectedPlayer = selectedPlayer
         let scene = GameScene(selectedLevel: selectedLevel, selectedPlayer: selectedPlayer)
         scene.scaleMode = .resizeFill
-        return scene
+        _skScene = State(initialValue: scene)
     }
     
     var body: some View {
@@ -69,7 +73,7 @@ struct GameView: View {
                         Button {
                             print("open settings")
                             // 💡 通知 GameScene 暫停遊戲
-                            NotificationCenter.default.post(name: Notification.Name("GameControl"), object: nil, userInfo: ["command":"pause"])
+                            NotificationCenter.default.post(name: Notification.Name("GameControl"), object: nil, userInfo: ["command":"pause","type":"tap"])
                             isPaused = true
                         } label: {
                             Image(systemName: "gearshape.fill")
@@ -136,7 +140,11 @@ struct GameView: View {
                                 NotificationCenter.default.post(name: Notification.Name("GameControl"), object: nil, userInfo: ["command":"right","type":"up"])
                             }
                         }, perform: {})
-                        
+                    }
+
+                    Spacer()
+
+                    HStack(spacing: 8) {
                         Button(action: {
                             NotificationCenter.default.post(
                                 name: Notification.Name("GameControl"),
@@ -149,11 +157,7 @@ struct GameView: View {
                                 .scaledToFit()
                                 .frame(width: 40, height: 40)
                         }
-                    }
-
-                    Spacer()
-
-                    HStack(spacing: 8) {
+                        
                         Button(action: {
                             NotificationCenter.default.post(
                                 name: Notification.Name("GameControl"),
@@ -179,7 +183,7 @@ struct GameView: View {
                     onResume: {
                         isPaused = false
                         // 💡 通知 GameScene 恢復遊戲
-                        NotificationCenter.default.post(name: Notification.Name("GameControl"), object: nil, userInfo: ["command":"resume"])
+                        NotificationCenter.default.post(name: Notification.Name("GameControl"), object: nil, userInfo: ["command":"resume","type":"tap"])
                     },
                     onQuit: {
                         isPaused = false
@@ -201,7 +205,10 @@ struct GameView: View {
                     onRestart: {
                         showResult = false
                         data.resetData()     // 1. 洗乾淨 DataManager 數據
-                        sceneID = UUID()     // 2. 更改 UUID，強制讓全新 GameScene 重頭載入
+                        let newScene = GameScene(selectedLevel: selectedLevel, selectedPlayer: selectedPlayer)
+                        newScene.scaleMode = .resizeFill
+                        skScene = newScene
+                        sceneID = UUID()
                     }
                 )
                 .transition(.opacity)

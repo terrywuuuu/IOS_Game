@@ -23,6 +23,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         self.selectedPlayer = selectedPlayer
         super.init(size: CGSize(width: 1024, height: 768))
         self.player = Player(player: selectedPlayer)
+        DataManager.shared.resetData()
+        self.resumeGame()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -30,6 +32,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func didMove(to view: SKView) {
+        self.resumeGame()
+        
         physicsWorld.gravity = CGVector(dx: 0,dy: -15)
 
         physicsWorld.contactDelegate = self
@@ -42,6 +46,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         levelBuilder.build(scene: self, player: player, level: selectedLevel)
 
         gameCamera.position = player.position
+        if gameCamera.parent != nil {
+            gameCamera.removeFromParent()
+        }
         addChild(gameCamera)
         self.camera = gameCamera
         cameraController = CameraController(camera: gameCamera, player: player)
@@ -64,6 +71,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             AudioManager.shared.playLose()
         }
 
+        print("🟢 GameScene didMove - 新場景已啟動, scene id: \(ObjectIdentifier(self))")
+        // 先清除，避免重複註冊
+        NotificationCenter.default.removeObserver(self, name: Notification.Name("GameControl"), object: nil)
         // Register for UI control commands (used by SwiftUI buttons for testing)
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(handleControlCommand(_:)),
@@ -84,10 +94,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self, name: Notification.Name("GameControl"), object: nil)
+        NotificationCenter.default.removeObserver(self)
+        print("💀 GameScene deinit - scene id: \(ObjectIdentifier(self))")
+    }
+    
+    override func willMove(from view: SKView) {
+        print("🔴 GameScene willMove - 舊場景移除, scene id: \(ObjectIdentifier(self))")
+        NotificationCenter.default.removeObserver(self)
     }
 
     @objc private func handleControlCommand(_ note: Notification) {
+        print("📩 收到通知, scene id: \(ObjectIdentifier(self)), command: \(note.userInfo ?? [:])")
         guard let info = note.userInfo as? [String: String],
               let command = info["command"],
               let type = info["type"] else { return }
@@ -112,6 +129,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
         case "attack":
             if type == "tap" { player.attack(scene: self) }
+            
+        case "pause":
+            self.pauseGame()
+            
+        case "resume":
+            self.resumeGame()
 
         default:
             break
@@ -155,12 +178,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             // 等音效播完再暫停
             run(.sequence([
-                                .wait(forDuration: 1.0),
-                                .run { [weak self] in
-                                    self?.pauseGame()
-                                    NotificationCenter.default.post(name: Notification.Name("GameFailure"), object: nil)
-                                }
-                            ]))
+                    .wait(forDuration: 1.0),
+                    .run { [weak self] in
+                        self?.pauseGame()
+                        NotificationCenter.default.post(name: Notification.Name("GameFailure"), object: nil)
+                    }
+                ]))
             return
         }
     }

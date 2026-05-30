@@ -36,7 +36,10 @@ class LevelBuilder {
         createItems(scene, level.items)
 
         createGoal(scene, level.goal)
-
+        
+        if player.parent != nil {
+            player.removeFromParent()
+        }
         scene.addChild(player)
     }
 
@@ -45,12 +48,6 @@ class LevelBuilder {
         let texWidth = texture.size().width
         let count = Int(ceil(CGFloat(levelWidth) / texWidth))
         
-//        background.size = CGSize(width: 3000, height: scene.size.height)
-//        background.position = CGPoint(x: 3000 / 2, y: scene.size.height / 2 + 100)
-//
-//        background.zPosition = -1
-//
-//        scene.addChild(background)
         for i in 0..<count {
                 let bg = SKSpriteNode(texture: texture)
                 bg.size = CGSize(width: texWidth, height: scene.size.height)
